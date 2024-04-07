@@ -1,25 +1,38 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import PostBox from "../../components/PostBox.astro";
-import { getCollection } from "astro:content";
-const posts = (await getCollection("posts")).sort(
-  (a, b) =>
-    new Date(b.data.publishedAt).getTime() -
-    new Date(a.data.publishedAt).getTime()
-);
+import Layout from '../../layouts/Layout.astro'
+import PostBox from '../../components/PostBox.astro'
+import * as qs from 'qs'
+import fetchApi from '../../lib/strapi'
+import type Post from '../../interfaces/post'
+
+const postsQs = {
+  populate: {
+    cover: true,
+  },
+  sort: ['publishedAt:desc'],
+  pagination: {
+    page: 1,
+    pageSize: 20,
+  },
+}
+
+const posts = await fetchApi<Post[]>({
+  endpoint: 'posts',
+  query: qs.stringify(postsQs),
+})
 ---
 
-<Layout og_type="website">
+<Layout og_type='website'>
   <div>
     {
       posts.map((post) => (
         <>
-          <div class="divider my-2" />
+          <div class='divider my-2' />
           <PostBox
-            title={post.data.title}
-            publishedAt={post.data.publishedAt}
-            description={post.data.description}
-            href={post.slug}
+            title={post.title || ''}
+            publishedAt={post.publishedAt}
+            description={post.description}
+            slug={post.slug || ''}
           />
         </>
       ))
