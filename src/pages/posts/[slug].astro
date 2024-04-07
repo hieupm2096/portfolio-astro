@@ -1,0 +1,51 @@
+---
+import type Post from '../../interfaces/post'
+import Layout from '../../layouts/Layout.astro'
+import fetchApi from '../../lib/strapi'
+import * as qs from 'qs'
+import Markdown from '@astropub/md/Markdown'
+
+const { slug } = Astro.params
+
+const queryBuilder = {
+  filters: {
+    slug: {
+      $eq: slug,
+    },
+  },
+  populate: {
+    cover: true,
+  },
+  pagination: {
+    page: 1,
+    pageSize: 1,
+  },
+}
+
+const posts = await fetchApi<Post[]>({
+  endpoint: 'posts',
+  query: qs.stringify(queryBuilder),
+})
+
+if (!posts) {
+  return Astro.redirect('/404')
+}
+
+const post = posts[0]
+---
+
+<Layout
+  title={post.title}
+  description={post.description}
+  og_title={post.title}
+  og_description={post.description}
+  og_type='article'
+>
+  <article class='prose mx-auto flex w-full max-w-prose flex-col gap-4'>
+    <h1 class='mb-0'>
+      {post.title}
+    </h1>
+    <div class='divider m-0'></div>
+    <Markdown of={post.content || ''} />
+  </article>
+</Layout>

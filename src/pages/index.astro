@@ -1,0 +1,154 @@
+---
+import Layout from '../layouts/Layout.astro'
+import SmallBox from '../components/SmallBox.astro'
+import { Picture } from 'astro:assets'
+import illus from '../assets/illus.png'
+import fetchApi from '../lib/strapi'
+import type About from '../interfaces/about'
+import type Post from '../interfaces/post'
+import * as qs from 'qs'
+
+const about = await fetchApi<About>({
+  endpoint: 'about',
+})
+
+const worksQs = {
+  filters: {
+    category: {
+      name: {
+        $eq: 'work',
+      },
+    },
+  },
+  populate: {
+    cover: true,
+  },
+  sort: ['priority:asc'],
+}
+
+const works = await fetchApi<Post[]>({
+  endpoint: 'posts',
+  query: qs.stringify(worksQs),
+})
+
+const postsQs = {
+  populate: {
+    cover: true,
+  },
+  sort: ['publishedAt:desc'],
+  pagination: {
+    page: 1,
+    pageSize: 4,
+  },
+}
+
+const blogs = await fetchApi<Post[]>({
+  endpoint: 'posts',
+  query: qs.stringify(postsQs),
+})
+---
+
+<Layout>
+  <main>
+    <div class='flex flex-col gap-20'>
+      <article class='md:flex-row-reverse md:justify-end md:gap-12'>
+        <div class='flex flex-row justify-between sm:grid-cols-3'>
+          <div class='col-span-2 flex flex-col gap-6 md:gap-8 my-auto'>
+            <h1 class='text-3xl'>{about.intro?.split('\n')[0] || ''}</h1>
+            <div class='flex flex-col'>
+              {
+                about.intro
+                  ?.split('\n')
+                  .slice(1)
+                  .map((e) => (
+                    <h2 class='w-auto sm:w-[85%] md:w-[90%] leading-6'>{e}</h2>
+                  ))
+              }
+            </div>
+
+            <div class='custom-breadcrumbs'>
+              <ul>
+                <li>
+                  <a href={about.linkedin} rel='noreferrer' target='_blank'
+                    >LinkedIn</a
+                  >
+                </li>
+                <li>
+                  <a href={about.github} rel='noreferrer' target='_blank'
+                    >GitHub</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href=`mailto:${about.email}`
+                    rel='noreferrer'
+                    target='_blank'>Email</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class='ml-auto hidden sm:block'>
+            <div class='avatar'>
+              <div class='w-60 rounded'>
+                <Picture
+                  src={illus}
+                  formats={['avif', 'webp']}
+                  alt='Icon'
+                  loading='eager'
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class='flex flex-col gap-8'>
+        <header class='w-full'>
+          <h3 class='text-lg'>Featured works</h3>
+        </header>
+        <section class='grid grid-cols-1 gap-4 justify-center items-stretch'>
+          {
+            works.map((work) => (
+              <SmallBox
+                title={work.title || ''}
+                note={work.note}
+                href={'/posts/' + work.slug}
+                tags={
+                  // Config.projects[project as keyof typeof Config.projects].tags
+                  []
+                }
+                imageUrl={work.cover?.url}
+                description={work.description}
+              />
+            ))
+          }
+        </section>
+      </article>
+
+      <article class='flex flex-col gap-8'>
+        <header class='flex w-full flex-row justify-between gap-2'>
+          <h3 class='text-lg'>Latest posts</h3>
+          <a
+            href='/posts'
+            class='text-sm text-primary underline decoration-dashed underline-offset-8'
+            rel='noreferrer'
+            >See all posts
+          </a>
+        </header>
+        <section class='grid grid-cols-1 gap-4 sm:grid-cols-2 mx-auto'>
+          {
+            blogs.map((post) => (
+              <SmallBox
+                title={post.title || ''}
+                publishedAt={post.publishedAt}
+                description={post.description}
+                href={'/posts/' + post.slug}
+              />
+            ))
+          }
+        </section>
+      </article>
+    </div>
+  </main>
+</Layout>
