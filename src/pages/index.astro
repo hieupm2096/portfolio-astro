@@ -6,7 +6,7 @@ import illus from '../assets/illus.png'
 import fetchApi from '../lib/strapi'
 import type About from '../interfaces/about'
 import type Post from '../interfaces/post'
-import * as qs from 'qs'
+import qs from 'qs'
 
 const about = await fetchApi<About>({
   endpoint: 'about',
